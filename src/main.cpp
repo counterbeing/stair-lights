@@ -1,41 +1,19 @@
 #include <Arduino.h>
 #include "FastLED.h"
-#include <ezButton.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
+#include "arduino_secrets.h"
+#include <ArduinoOTA.h>
 
 #define LED_DATA_PIN 25
-#define NUM_LEDS 2
+#define NUM_LEDS 3
+#define LED_BUILTIN 2
 
 CRGB leds[NUM_LEDS];
 
-// set up push button with debounce
-// #define BUTTON_PIN 2
-ezButton button(23);
 int lastState = LOW;
 int currentState;
 int currentAnimationIndex = 0;
-
-void bootPattern()
-{
-  fill_solid(leds, NUM_LEDS, CRGB::Red);
-  FastLED.show();
-  delay(800);
-  fill_solid(leds, NUM_LEDS, CRGB::Green);
-  FastLED.show();
-  delay(800);
-  fill_solid(leds, NUM_LEDS, CRGB::Blue);
-  FastLED.show();
-  delay(800);
-}
-
-void setup()
-{
-  Serial.begin(115200);
-  Serial.println("Happy camping!");
-  button.setDebounceTime(100);
-
-  FastLED.addLeds<WS2811, LED_DATA_PIN, RGB>(leds, NUM_LEDS);
-  bootPattern();
-}
 
 int countUPAndDown(int min, int max, int step)
 {
@@ -63,7 +41,6 @@ int countUPAndDown(int min, int max, int step)
   return count;
 }
 
-// A function that moves a rainbow from one end of the strip to the other
 void rainbow()
 {
   static unsigned long lastRainbow = 0;
@@ -78,6 +55,114 @@ void rainbow()
     FastLED.show();
   }
 }
+
+void callback(char *topic, byte *payload, unsigned int length)
+{
+  String message;
+  for (unsigned int i = 0; i < length; i++)
+  {
+    message += (char)payload[i];
+  }
+
+  // Handle received message
+  if (String(topic) == "home/stair-balls/light/on" && message == "ON")
+  {
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+  else if (String(topic) == "home/stair-balls/light/on" && message == "OFF")
+  {
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
+}
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+void reconnect()
+{
+  // Loop until we're reconnected
+  while (!client.connected())
+  {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (client.connect("arduinoClient"))
+    {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      client.publish("outTopic", "hello world");
+      // ... and resubscribe
+      client.subscribe("inTopic");
+    }
+    else
+    {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+void bootPattern()
+{
+  fill_solid(leds, NUM_LEDS, CRGB::Red);
+  FastLED.show();
+  delay(800);
+  fill_solid(leds, NUM_LEDS, CRGB::Green);
+  FastLED.show();
+  delay(800);
+  fill_solid(leds, NUM_LEDS, CRGB::Blue);
+  FastLED.show();
+  delay(800);
+}
+
+void printWifiStatus()
+{
+  // print the SSID of the network you're attached to:
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your WiFi shield's IP address:
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print the received signal strength:
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
+}
+
+void setup()
+{
+  Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  FastLED.addLeds<WS2811, LED_DATA_PIN, RGB>(leds, NUM_LEDS);
+  bootPattern();
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(SECRET_SSID, SECRET_PASS);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(1000);
+    Serial.print('.');
+  }
+  client.setServer("home.corylogan.com", 1883);
+  client.setCallback(callback);
+  Serial.println("BOOTED");
+
+  ArduinoOTA.setHostname("stair-balls");
+  // ArduinoOTA.setPassword("password");
+  ArduinoOTA.begin();
+  // ArduinoOTA.begin(WiFi.localIP(), "stair-balls", "password", InternalStorage);
+
+  printWifiStatus();
+}
+
+// A function that moves a rainbow from one end of the strip to the other
 
 // color fade
 void fadeAllColors()
@@ -139,7 +224,13 @@ void handleAnimations()
 
 void loop()
 {
-  button.loop();
+  ArduinoOTA.handle();
+  if (!client.connected())
+  {
+    reconnect();
+  }
+  client.loop();
+
   delay(1);
   rainbow();
 }
