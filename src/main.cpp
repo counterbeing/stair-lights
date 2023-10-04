@@ -64,6 +64,8 @@ void callback(char *topic, byte *payload, unsigned int length)
     message += (char)payload[i];
   }
 
+  Serial.println(message);
+
   // Handle received message
   if (String(topic) == "home/stair-balls/light/on" && message == "ON")
   {
@@ -80,18 +82,35 @@ PubSubClient client(espClient);
 
 void reconnect()
 {
-  // Loop until we're reconnected
   while (!client.connected())
   {
     Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    if (client.connect("arduinoClient"))
+    if (client.connect("stair-balls"))
     {
       Serial.println("connected");
-      // Once connected, publish an announcement...
-      client.publish("outTopic", "hello world");
-      // ... and resubscribe
-      client.subscribe("inTopic");
+      client.subscribe("home/stair-balls/light/on");
+
+            String discovery_payload = "{"
+                                 "\"name\": \"Onboard LED\","
+                                 "\"command_topic\": \"home/stair-balls/light/on\","
+                                 "\"state_topic\": \"home/stair-balls/light/state\","
+                                 "\"payload_on\": \"ON\","
+                                 "\"payload_off\": \"OFF\","
+                                 "\"unique_id\": \"ESP32_ONBOARD_LED\""
+                                 "}";
+
+      client.publish("debug", "running");
+
+      Serial.println("Sending config json... ");
+      bool result = client.publish("homeassistant/light/stair-balls/light/config", discovery_payload.c_str(), true);
+      if (result)
+      {
+        Serial.println("Payload published successfully.");
+      }
+      else
+      {
+        Serial.println("Payload publishing failed.");
+      }
     }
     else
     {
