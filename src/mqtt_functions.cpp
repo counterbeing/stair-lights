@@ -41,8 +41,6 @@ void reconnect()
 																 "\"unique_id\": \"ESP32_ONBOARD_LED\""
 																 "}";
 
-			client.publish("debug", "running");
-
 			Serial.println("Sending config json... ");
 			bool result = client.publish("homeassistant/light/stair-balls/light/config", discovery_payload.c_str(), true);
 			if (result)
@@ -63,4 +61,9 @@ void reconnect()
 			delay(5000);
 		}
 	}
+}
+
+void sendDebugMessage(const char *message)
+{
+	client.publish("debug", message);
 }

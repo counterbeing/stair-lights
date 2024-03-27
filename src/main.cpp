@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include "arduino_secrets.h"
 #include <ArduinoOTA.h>
+#include <ESPmDNS.h>
 
 #include "config.h"
 #include "mqtt_functions.h"
@@ -13,6 +14,8 @@ CRGB leds[NUM_LEDS];
 int lastState = LOW;
 int currentState;
 int currentAnimationIndex = 0;
+
+String hostname = "stair-balls";
 
 int countUPAndDown(int min, int max, int step)
 {
@@ -73,16 +76,13 @@ void bootPattern()
 
 void printWifiStatus()
 {
-  // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
   Serial.println(WiFi.SSID());
 
-  // print your WiFi shield's IP address:
   IPAddress ip = WiFi.localIP();
   Serial.print("IP Address: ");
   Serial.println(ip);
 
-  // print the received signal strength:
   long rssi = WiFi.RSSI();
   Serial.print("signal strength (RSSI):");
   Serial.print(rssi);
@@ -93,12 +93,21 @@ void setup()
 {
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(MOTION_SENSOR_PIN, INPUT);
 
   FastLED.addLeds<WS2811, LED_DATA_PIN, RGB>(leds, NUM_LEDS);
   bootPattern();
 
   WiFi.mode(WIFI_STA);
+  ArduinoOTA.setHostname("stair-balls");
+  WiFi.setHostname(hostname.c_str());
   WiFi.begin(SECRET_SSID, SECRET_PASS);
+
+  if (MDNS.begin(hostname.c_str()))
+  {
+    Serial.println("MDNS responder started");
+  }
+
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(1000);
@@ -108,15 +117,9 @@ void setup()
   client.setCallback(callback);
   Serial.println("BOOTED");
 
-  ArduinoOTA.setHostname("stair-balls");
-  // ArduinoOTA.setPassword("password");
   ArduinoOTA.begin();
-  // ArduinoOTA.begin(WiFi.localIP(), "stair-balls", "password", InternalStorage);
-
   printWifiStatus();
 }
-
-// A function that moves a rainbow from one end of the strip to the other
 
 // color fade
 void fadeAllColors()
@@ -176,6 +179,39 @@ void handleAnimations()
   }
 }
 
+int currentBrightness = 0;
+unsigned long lastMotionDetectedTime = 0;
+unsigned long lastDimmingTime = 0;
+
+void flashLedsOnMotion()
+{
+  unsigned long currentMillis = millis();
+
+  if (digitalRead(MOTION_SENSOR_PIN) == HIGH && (currentMillis - lastMotionDetectedTime) > 10)
+  {
+    sendDebugMessage("motion detected");
+    currentBrightness += 1;
+    if (currentBrightness > 255)
+      currentBrightness = 255;
+    lastMotionDetectedTime = currentMillis;
+  }
+
+  for (int i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = CHSV(0, 255, currentBrightness);
+  }
+  FastLED.show();
+
+  unsigned long dimmingInterval = map(currentBrightness, 0, 255, 1, 75); // As brightness decreases, dimming interval decreases
+  if (currentMillis - lastMotionDetectedTime > 500 && currentMillis - lastDimmingTime > dimmingInterval)
+  {
+    currentBrightness -= 1;
+    if (currentBrightness < 0)
+      currentBrightness = 0;
+    lastDimmingTime = currentMillis; // Update the last dimming time
+  }
+}
+
 void loop()
 {
   ArduinoOTA.handle();
@@ -185,6 +221,8 @@ void loop()
   }
   client.loop();
 
+  flashLedsOnMotion();
+
   delay(1);
-  rainbow();
+  // rainbow();
 }
