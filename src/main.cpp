@@ -212,6 +212,78 @@ void flashLedsOnMotion()
   }
 }
 
+unsigned long lastShiftTime = 0;
+void snakeLedsOnMotion()
+{
+  unsigned long currentMillis = millis();
+
+  static boolean motionDetected = false;
+  static boolean firstMotion = true;
+
+  if (digitalRead(MOTION_SENSOR_PIN) == HIGH)
+  {
+    if (!motionDetected || (currentMillis - lastMotionDetectedTime) > 10)
+    {
+      sendDebugMessage("motion detected");
+      motionDetected = true;
+      lastMotionDetectedTime = currentMillis;
+      if (firstMotion)
+      {
+        leds[0] = CHSV(random(256), 255, 255); // Initialize the first LED with a random color at full brightness
+        firstMotion = false;
+      }
+    }
+  }
+  else if (currentMillis - lastMotionDetectedTime > 2000)
+  {
+    motionDetected = false;
+    firstMotion = true; // Reset for the next motion event
+  }
+
+  if (motionDetected)
+  {
+    if (currentMillis - lastShiftTime > 100)
+    {
+      for (int i = NUM_LEDS - 1; i > 0; i--)
+      {
+        leds[i] = leds[i - 1];
+      }
+
+      if (NUM_LEDS > 1)
+      {
+        CHSV newColor = rgb2hsv_approximate(leds[1]);
+        newColor.hue = (newColor.hue + 1) % 256; // Ensure the hue wraps around at 255
+        leds[0] = newColor;
+      }
+
+      lastShiftTime = currentMillis;
+    }
+    else if (currentMillis - lastShiftTime > 2000) // Add this condition to reset the hue after 2 seconds
+    {
+      for (int i = 0; i < NUM_LEDS; i++)
+      {
+        leds[i].hue = (leds[i].hue + 1) % 256; // Loop the hue for all LEDs
+      }
+      lastShiftTime = currentMillis;
+    }
+  }
+  else
+  {
+    if (currentMillis - lastShiftTime > 100)
+    {
+      for (int i = NUM_LEDS - 1; i > 0; i--)
+      {
+        leds[i] = leds[i - 1];
+      }
+      leds[0] = CHSV(0, 0, 0);
+
+      lastShiftTime = currentMillis;
+    }
+  }
+
+  FastLED.show();
+}
+
 void loop()
 {
   ArduinoOTA.handle();
@@ -221,7 +293,8 @@ void loop()
   }
   client.loop();
 
-  flashLedsOnMotion();
+  // flashLedsOnMotion();
+  snakeLedsOnMotion();
 
   delay(1);
   // rainbow();
