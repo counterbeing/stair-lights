@@ -219,6 +219,7 @@ void snakeLedsOnMotion()
 
   static boolean motionDetected = false;
   static boolean firstMotion = true;
+  static uint8_t hue = 0; // Store hue to continuously update and loop through colors
 
   if (digitalRead(MOTION_SENSOR_PIN) == HIGH)
   {
@@ -229,7 +230,8 @@ void snakeLedsOnMotion()
       lastMotionDetectedTime = currentMillis;
       if (firstMotion)
       {
-        leds[0] = CHSV(random(256), 255, 255); // Initialize the first LED with a random color at full brightness
+        hue = random(256);             // Initialize hue with a random value
+        leds[0] = CHSV(hue, 255, 255); // Use full saturation and value for vivid colors
         firstMotion = false;
       }
     }
@@ -249,33 +251,23 @@ void snakeLedsOnMotion()
         leds[i] = leds[i - 1];
       }
 
-      if (NUM_LEDS > 1)
-      {
-        CHSV newColor = rgb2hsv_approximate(leds[1]);
-        newColor.hue = (newColor.hue + 1) % 256; // Ensure the hue wraps around at 255
-        leds[0] = newColor;
-      }
+      // Increment hue for the first LED to ensure color loop
+      hue = (hue + 1) % 256;
+      leds[0] = CHSV(hue, 255, 255);
 
-      lastShiftTime = currentMillis;
-    }
-    else if (currentMillis - lastShiftTime > 2000) // Add this condition to reset the hue after 2 seconds
-    {
-      for (int i = 0; i < NUM_LEDS; i++)
-      {
-        leds[i].hue = (leds[i].hue + 1) % 256; // Loop the hue for all LEDs
-      }
       lastShiftTime = currentMillis;
     }
   }
   else
   {
+    // After two seconds of no motion, start pushing off the LEDs
     if (currentMillis - lastShiftTime > 100)
     {
       for (int i = NUM_LEDS - 1; i > 0; i--)
       {
         leds[i] = leds[i - 1];
       }
-      leds[0] = CHSV(0, 0, 0);
+      leds[0] = CHSV(0, 0, 0); // Turn off the first LED
 
       lastShiftTime = currentMillis;
     }
