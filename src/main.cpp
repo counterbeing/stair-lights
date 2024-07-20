@@ -276,6 +276,32 @@ void snakeLedsOnMotion()
   FastLED.show();
 }
 
+unsigned long lastPatternChangeTime = 0;
+int currentPatternIndex = 0;
+
+void rgbLoop()
+{
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastPatternChangeTime >= 1000)
+  {
+    lastPatternChangeTime = currentMillis;
+    currentPatternIndex = (currentPatternIndex + 1) % 3;
+    switch (currentPatternIndex)
+    {
+    case 0:
+      fill_solid(leds, NUM_LEDS, CRGB::Red);
+      break;
+    case 1:
+      fill_solid(leds, NUM_LEDS, CRGB::Green);
+      break;
+    case 2:
+      fill_solid(leds, NUM_LEDS, CRGB::Blue);
+      break;
+    }
+    FastLED.show();
+  }
+}
+
 void loop()
 {
   ArduinoOTA.handle();
@@ -286,7 +312,8 @@ void loop()
   client.loop();
 
   // flashLedsOnMotion();
-  snakeLedsOnMotion();
+  // snakeLedsOnMotion();
+  rgbLoop();
 
   delay(1);
   // rainbow();
