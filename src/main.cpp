@@ -5,6 +5,7 @@
 #include "arduino_secrets.h"
 #include <ArduinoOTA.h>
 #include <ESPmDNS.h>
+#include "globals.h"
 
 #include "config.h"
 #include "mqtt_functions.h"
@@ -114,6 +115,7 @@ void setup()
     Serial.print('.');
   }
   client.setServer("home.corylogan.com", 1883);
+  client.setBufferSize(512);
   client.setCallback(callback);
   Serial.println("BOOTED");
 
@@ -311,9 +313,20 @@ void loop()
   }
   client.loop();
 
-  // flashLedsOnMotion();
-  // snakeLedsOnMotion();
-  rgbLoop();
+  switch (currentAnimation)
+  {
+  case DEBUG_MODE:
+    rgbLoop();
+    break;
+
+  case SNAKE_MODE:
+    snakeLedsOnMotion();
+    break;
+
+  case MOVIE_MODE:
+    flashLedsOnMotion();
+    break;
+  }
 
   delay(1);
   // rainbow();
