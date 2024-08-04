@@ -214,6 +214,57 @@ void flashLedsOnMotion()
   }
 }
 
+void whiteWhenMotionDetected()
+{
+  unsigned long currentMillis = millis();
+
+  static boolean motionDetected = false;
+  static boolean fadingOut = false;
+  static unsigned long lastMotionTime = 0;
+  static int fade = 0;
+
+  if (digitalRead(MOTION_SENSOR_PIN) == HIGH)
+  {
+    if (!motionDetected)
+    { // Only reset these if motion was previously not detected
+      motionDetected = true;
+      fadingOut = false;
+      lastMotionTime = currentMillis;
+      fade = 0; // Start fading in from dark
+    }
+  }
+  else
+  {
+    if (currentMillis - lastMotionTime > 10000)
+    {
+      motionDetected = false;
+      fadingOut = true;
+    }
+  }
+
+  if (motionDetected && fade < 255)
+  {
+    fade += 1;
+    fill_solid(leds, NUM_LEDS, CRGB(fade, fade, fade));
+    FastLED.show();
+  }
+  else if (fadingOut)
+  {
+    if (fade > 0)
+    {
+      fade -= 1;
+      fill_solid(leds, NUM_LEDS, CRGB(fade, fade, fade));
+      FastLED.show();
+    }
+    else
+    {
+      fill_solid(leds, NUM_LEDS, CRGB::Black);
+      FastLED.show();
+      fadingOut = false; // Stop fading out after reaching black
+    }
+  }
+}
+
 unsigned long lastShiftTime = 0;
 void snakeLedsOnMotion()
 {
@@ -225,7 +276,7 @@ void snakeLedsOnMotion()
 
   if (digitalRead(MOTION_SENSOR_PIN) == HIGH)
   {
-    if (!motionDetected || (currentMillis - lastMotionDetectedTime) > 10)
+    if (!motionDetected || (currentMillis - lastMotionDetectedTime) > 100)
     {
       sendDebugMessage("motion detected");
       motionDetected = true;
@@ -325,6 +376,10 @@ void loop()
 
   case MOVIE_MODE:
     flashLedsOnMotion();
+    break;
+
+  case WHITE_MODE:
+    whiteWhenMotionDetected();
     break;
   }
 

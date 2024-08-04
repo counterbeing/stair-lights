@@ -1,6 +1,6 @@
 #pragma once
 
-#define NUM_LEDS 56
+#define NUM_LEDS 119
 // #define NUM_LEDS 7
 #define MOTION_SENSOR_PIN 27
 #define LED_DATA_PIN 25

@@ -6,7 +6,8 @@ enum AnimationState
 {
 	DEBUG_MODE,
 	SNAKE_MODE,
-	MOVIE_MODE
+	MOVIE_MODE,
+	WHITE_MODE
 };
 
 extern volatile AnimationState currentAnimation;
