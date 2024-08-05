@@ -14,17 +14,17 @@ void callback(char *topic, byte *payload, unsigned int length)
 	Serial.println(message);
 
 	// Handling topics
-	if (topicStr == "home/stair-balls/white_light_detector/set")
+	if (topicStr == "home/stair-balls/white_light_detector/set" && message == "ON")
 	{
-		currentAnimation = (message == "ON") ? WHITE_MODE : SNAKE_MODE;
+		switchAnimation(WHITE_MODE);
 	}
-	else if (topicStr == "home/stair-balls/mode_switch/set")
+	else if (topicStr == "home/stair-balls/mode_switch/set" && message == "ON")
 	{
-		currentAnimation = (message == "ON") ? DEBUG_MODE : SNAKE_MODE;
+		switchAnimation(DEBUG_MODE);
 	}
 	else if (topicStr == "home/stair-balls/animation/trigger")
 	{
-		currentAnimation = MOVIE_MODE;
+		switchAnimation(MOVIE_MODE);
 	}
 }
 

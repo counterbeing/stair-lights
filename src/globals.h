@@ -12,4 +12,8 @@ enum AnimationState
 
 extern volatile AnimationState currentAnimation;
 
+extern volatile bool animationInitialized;
+
+void switchAnimation(AnimationState nextAnimation);
+
 #endif
