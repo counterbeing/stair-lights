@@ -355,6 +355,67 @@ void rgbLoop()
   }
 }
 
+void pushRow()
+{
+  for (int i = NUM_LEDS - 1; i >= 7; i--)
+  {
+    leds[i] = leds[i - 7];
+  }
+  for (int i = 0; i < 7; i++)
+  {
+    leds[i] = CRGB::Black;
+  }
+}
+
+void arrows()
+{
+  static int i = 0;
+
+  if (millis() - lastShiftTime > 200)
+  {
+
+    lastShiftTime = millis();
+    i++;
+    pushRow();
+    switch (i)
+    {
+    case 1:
+      leds[3] = CRGB::Red;
+      break;
+
+    case 2:
+      leds[2] = CRGB::Red;
+      leds[3] = CRGB::Purple;
+      leds[4] = CRGB::Red;
+      break;
+
+    case 3:
+      leds[1] = CRGB::Red;
+      leds[2] = CRGB::Purple;
+      leds[3] = CRGB::Purple;
+      leds[4] = CRGB::Purple;
+      leds[5] = CRGB::Red;
+      break;
+
+    case 4:
+      leds[0] = CRGB::Red;
+      leds[1] = CRGB::Purple;
+      leds[2] = CRGB::Purple;
+      leds[3] = CRGB::Purple;
+      leds[4] = CRGB::Purple;
+      leds[5] = CRGB::Purple;
+      leds[6] = CRGB::Red;
+      break;
+
+    default:
+      i = 0;
+      break;
+    }
+
+    FastLED.show();
+  }
+}
+
 void loop()
 {
   ArduinoOTA.handle();
@@ -375,7 +436,7 @@ void loop()
     break;
 
   case MOVIE_MODE:
-    flashLedsOnMotion();
+    arrows();
     break;
 
   case WHITE_MODE:

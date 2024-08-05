@@ -7,31 +7,24 @@ void callback(char *topic, byte *payload, unsigned int length)
 	String message;
 	for (unsigned int i = 0; i < length; i++)
 	{
-		message += (char)payload[i];
+		message += (char)payload[i]; // Build the message directly from payload
 	}
+	String topicStr = String(topic); // Convert topic to String once
 
 	Serial.println(message);
 
-	if (String(topic) == "home/stair-balls/mode_switch/set")
+	// Handling topics
+	if (topicStr == "home/stair-balls/white_light_detector/set")
 	{
-		if (message == "ON")
-		{
-			currentAnimation = DEBUG_MODE;
-		}
-		else if (message == "OFF")
-		{
-			currentAnimation = SNAKE_MODE;
-		}
+		currentAnimation = (message == "ON") ? WHITE_MODE : SNAKE_MODE;
 	}
-
-	// Handle received message
-	if (String(topic) == "home/stair-balls/light/on" && message == "ON")
+	else if (topicStr == "home/stair-balls/mode_switch/set")
 	{
-		digitalWrite(LED_BUILTIN, LOW);
+		currentAnimation = (message == "ON") ? DEBUG_MODE : SNAKE_MODE;
 	}
-	else if (String(topic) == "home/stair-balls/light/on" && message == "OFF")
+	else if (topicStr == "home/stair-balls/animation/trigger")
 	{
-		digitalWrite(LED_BUILTIN, HIGH);
+		currentAnimation = MOVIE_MODE;
 	}
 }
 
@@ -43,17 +36,18 @@ void reconnect()
 		if (client.connect("stair-balls"))
 		{
 			Serial.println("Connected to MQTT server!");
-			client.subscribe("home/stair-balls/light/on");
+			// client.subscribe("home/stair-balls/light/on");
+			client.subscribe("home/stair-balls/white_light_detector/set");
 			client.subscribe("home/stair-balls/mode_switch/set");
+			client.subscribe("home/stair-balls/animation/trigger");
 
-			String discovery_payload = "{"
-																 "\"name\": \"OnBoard LED\","
-																 "\"command_topic\": \"home/stair-balls/light/on\","
-																 "\"state_topic\": \"home/stair-balls/light/state\","
-																 "\"payload_on\": \"ON\","
-																 "\"payload_off\": \"OFF\","
-																 "\"unique_id\": \"ESP32_ONBOARD_LED\""
-																 "}";
+			const char *button_discovery_payload = R"({
+				"name": "Animation Trigger",
+				"unique_id": "animation_trigger_btn",
+				"command_topic": "home/stair-balls/animation/trigger",
+				"payload_press": "trigger_animation",
+				"device_class": "button"
+			})";
 
 			String mode_discovery_payload = "{"
 																			"\"name\": \"Balls Mode Switch\","
@@ -64,11 +58,22 @@ void reconnect()
 																			"\"unique_id\": \"BALLS_MODE_SWITCH\""
 																			"}";
 
-			Serial.println("Sending config json... ");
-			bool result1 = client.publish("homeassistant/light/stair-balls/light/config", discovery_payload.c_str(), true);
-			bool result2 = client.publish("homeassistant/switch/stair-balls/BALLS_MODE_SWITCH/config", mode_discovery_payload.c_str(), true);
+			String white_light_detector_payload = "{"
+																						"\"name\": \"White light detector switch\","
+																						"\"command_topic\": \"home/stair-balls/white_light_detector/set\","
+																						"\"state_topic\": \"home/stair-balls/white_light_detector/state\","
+																						"\"payload_on\": \"ON\","
+																						"\"payload_off\": \"OFF\","
+																						"\"unique_id\": \"BALLS_WHITE_LIGHT_DETECTOR\""
+																						"}";
 
-			if (result1 && result2)
+			Serial.println("Sending config json... ");
+
+			bool result = client.publish("homeassistant/button/stair-balls/animation_trigger_btn/config", button_discovery_payload, true);
+			bool result2 = client.publish("homeassistant/switch/stair-balls/BALLS_MODE_SWITCH/config", mode_discovery_payload.c_str(), true);
+			bool result3 = client.publish("homeassistant/switch/stair-balls/BALLS_WHITE_LIGHT_DETECTOR/config", white_light_detector_payload.c_str(), true);
+
+			if (result2 && result3)
 			{
 				Serial.println("Payload published successfully.");
 			}
