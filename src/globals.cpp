@@ -1,7 +1,7 @@
 // globals.cpp
 #include "globals.h"
 
-volatile AnimationState currentAnimation = WHITE_MODE; // Definition
+volatile AnimationState currentAnimation = SNAKE_MODE; // Definition
 volatile bool animationInitialized = false;
 
 void switchAnimation(AnimationState nextAnimation)

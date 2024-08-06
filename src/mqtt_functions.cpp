@@ -14,11 +14,12 @@ void callback(char *topic, byte *payload, unsigned int length)
 
 	// Mapping topic strings to animation states
 	static const std::map<String, AnimationState> topicToAnimation{
-			{MqttTopics::WhiteLightDetectorSet, WHITE_MODE},
-			{MqttTopics::ModeSwitchSet, DEBUG_MODE},
-			{MqttTopics::AnimationTrigger, MOVIE_MODE}};
+			{MqttTopics::WhiteModeSet, WHITE_MODE},
+			{MqttTopics::SnakeModeSet, SNAKE_MODE},
+			{MqttTopics::DebugModeSet, DEBUG_MODE},
+			{MqttTopics::MovieModeSet, MOVIE_MODE}};
 
-	if (message == "ON" || topicStr == MqttTopics::AnimationTrigger)
+	if (message == "ON" || topicStr == MqttTopics::MovieModeSet)
 	{
 		auto it = topicToAnimation.find(topicStr);
 		if (it != topicToAnimation.end())
@@ -28,90 +29,55 @@ void callback(char *topic, byte *payload, unsigned int length)
 	}
 }
 
-String createDiscoveryPayload(const char *name, const char *uniqueId, const char *commandTopic, const char *stateTopic)
-{
-	char buffer[512]; // Adjust size as needed for your payloads
-	snprintf(buffer, sizeof(buffer), R"({
-        "name": "%s",
-        "unique_id": "%s",
-        "command_topic": "%s",
-        "state_topic": "%s"
-    })",
-					 name, uniqueId, commandTopic, stateTopic);
-
-	return String(buffer);
-}
-
 struct Payload
 {
-	const char *topic;
-	const char *payload;
+	String topic; // Change type to String for automatic memory management
+	String payload;
 	bool retain;
 };
 
-Payload generatePizayload(const char *name, const char *uniqueId)
+Payload generateDiscoveryPayload(const char *name, const char *uniqueId)
 {
-	char buffer[512]; // Adjust size as needed for your payloads
+	char buffer[512];
 	snprintf(buffer, sizeof(buffer), R"({
-		"name": "%s",
-		"unique_id": "%s",
-		"command_topic": "home/stair-balls/%s/trigger",
-		"state_topic": "home/stair-balls/%s/state",
-		"payload_press": "trigger_animation",
-		"device_class": "button"
-	})",
+        "name": "%s",
+        "unique_id": "%s",
+        "command_topic": "home/stair-balls/%s/trigger",
+        "state_topic": "home/stair-balls/%s/state"
+    })",
 					 name, uniqueId, uniqueId, uniqueId);
 
-	std::string topic = "homeassistant/button/" + std::string(uniqueId) + "/config";
-	return {topic.c_str(), buffer, true};
+	String topic = "homeassistant/button/" + String(uniqueId) + "/config";
+	return {topic, String(buffer), true};
 }
 
 void sendDiscoveryPayloads()
 {
 
 	static const Payload payloads[] = {
-			generatePizayload("My test name", "my-test-name"),
-			{"homeassistant/button/stair-balls/animation_trigger_btn/config", R"({
-            "name": "Animation Trigger",
-            "unique_id": "animation_trigger_btn",
-            "command_topic": "home/stair-balls/animation/trigger",
-            "payload_press": "trigger_animation",
-            "device_class": "button"
-        })",
-			 true},
-			{"homeassistant/switch/stair-balls/BALLS_MODE_SWITCH/config", R"({
-            "name": "Balls Mode Switch",
-            "command_topic": "home/stair-balls/mode_switch/set",
-            "state_topic": "home/stair-balls/mode_switch/state",
-            "payload_on": "ON",
-            "payload_off": "OFF",
-            "unique_id": "BALLS_MODE_SWITCH"
-        })",
-			 true},
-			{"homeassistant/button/trigger_action_btn/config", R"({
-            "name": "EXAMPLEBUTTON",
-            "command_topic": "home/example-topic",
-            "state_topic": "home/exmaple-state",
-            "unique_id": "EXAMPLE_BUTTON"
-        })",
-			 true},
-			{"homeassistant/switch/stair-balls/BALLS_WHITE_LIGHT_DETECTOR/config", R"({
-            "name": "White light detector switch",
-            "command_topic": "home/stair-balls/white_light_detector/set",
-            "state_topic": "home/stair-balls/white_light_detector/state",
-            "payload_on": "ON",
-            "payload_off": "OFF",
-            "unique_id": "BALLS_WHITE_LIGHT_DETECTOR"
-        })",
-			 true}};
+			generateDiscoveryPayload("White Mode", "white_mode"),
+			generateDiscoveryPayload("Debug Mode", "debug_mode"),
+			generateDiscoveryPayload("Snake Mode", "snake_mode"),
+			generateDiscoveryPayload("Movie Mode", "movie_mode")};
 
-	Serial.println("Sending config json... ");
+	Serial.println("Sending config json...");
 	for (const auto &payload : payloads)
 	{
-		if (!client.publish(payload.topic, payload.payload, payload.retain))
+		if (!client.connected())
+		{
+			reconnect();
+		}
+
+		Serial.println("Publishing to topic: " + payload.topic);
+		if (!client.publish(payload.topic.c_str(), payload.payload.c_str(), payload.retain))
 		{
 			Serial.println("Payload publishing failed.");
 		}
+		else
+		{
+			Serial.println("Payload published successfully.");
+		}
+		delay(100);
 	}
 }
 
@@ -123,9 +89,10 @@ void sendDebugMessage(const char *message)
 void reconnect()
 {
 	static const char *topics[] = {
-			"home/stair-balls/white_light_detector/set",
-			"home/stair-balls/mode_switch/set",
-			"home/stair-balls/animation/trigger"};
+			"home/stair-balls/movie_mode/trigger",
+			"home/stair-balls/white_mode/trigger",
+			"home/stair-balls/debug_mode/trigger",
+			"home/stair-balls/snake_mode/trigger"};
 
 	while (!client.connected())
 	{
