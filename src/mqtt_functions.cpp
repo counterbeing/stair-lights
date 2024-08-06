@@ -19,7 +19,7 @@ void callback(char *topic, byte *payload, unsigned int length)
 			{MqttTopics::DebugModeSet, DEBUG_MODE},
 			{MqttTopics::MovieModeSet, MOVIE_MODE}};
 
-	if (message == "ON" || topicStr == MqttTopics::MovieModeSet)
+	if (message == "PRESS" || topicStr == MqttTopics::MovieModeSet)
 	{
 		auto it = topicToAnimation.find(topicStr);
 		if (it != topicToAnimation.end())
