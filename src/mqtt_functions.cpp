@@ -17,6 +17,7 @@ void callback(char *topic, byte *payload, unsigned int length)
 			{MqttTopics::WhiteModeSet, WHITE_MODE},
 			{MqttTopics::SnakeModeSet, SNAKE_MODE},
 			{MqttTopics::DebugModeSet, DEBUG_MODE},
+			{MqttTopics::NightVisionSet, NIGHT_VISION},
 			{MqttTopics::MovieModeSet, MOVIE_MODE}};
 
 	if (message == "PRESS" || topicStr == MqttTopics::MovieModeSet)
@@ -58,6 +59,7 @@ void sendDiscoveryPayloads()
 			generateDiscoveryPayload("White Mode", "white_mode"),
 			generateDiscoveryPayload("Debug Mode", "debug_mode"),
 			generateDiscoveryPayload("Snake Mode", "snake_mode"),
+			generateDiscoveryPayload("Night Vision", "night_vision"),
 			generateDiscoveryPayload("Movie Mode", "movie_mode")};
 
 	Serial.println("Sending config json...");
@@ -92,6 +94,7 @@ void reconnect()
 			"home/stair-balls/movie_mode/trigger",
 			"home/stair-balls/white_mode/trigger",
 			"home/stair-balls/debug_mode/trigger",
+			"home/stair-balls/night_vision/trigger",
 			"home/stair-balls/snake_mode/trigger"};
 
 	while (!client.connected())

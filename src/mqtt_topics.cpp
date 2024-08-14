@@ -5,3 +5,4 @@ const String MqttTopics::WhiteModeSet = "home/stair-balls/white_mode/trigger";
 const String MqttTopics::SnakeModeSet = "home/stair-balls/snake_mode/trigger";
 const String MqttTopics::MovieModeSet = "home/stair-balls/movie_mode/trigger";
 const String MqttTopics::DebugModeSet = "home/stair-balls/debug_mode/trigger";
+const String MqttTopics::NightVisionSet = "home/stair-balls/night_vision/trigger";

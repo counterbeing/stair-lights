@@ -144,48 +144,11 @@ void cleanup()
   FastLED.show();
 }
 
-void night_vision()
-{
-  fill_solid(leds, NUM_LEDS, CRGB::Red);
-  FastLED.show();
-}
-
-void handleAnimations()
-{
-  switch (currentAnimationIndex)
-  {
-  case 0:
-    FastLED.setBrightness(64);
-    night_vision();
-    break;
-  case 1:
-    FastLED.setBrightness(240);
-    night_vision();
-    break;
-  case 2:
-    FastLED.setBrightness(150);
-    cleanup();
-    break;
-  case 3:
-    FastLED.setBrightness(255);
-    cleanup();
-    break;
-  case 4:
-    FastLED.setBrightness(255);
-    rainbow();
-    break;
-  default:
-    FastLED.setBrightness(255);
-    fadeAllColors();
-    break;
-  }
-}
-
 int currentBrightness = 0;
 unsigned long lastMotionDetectedTime = 0;
 unsigned long lastDimmingTime = 0;
 
-void flashLedsOnMotion()
+void nightVision()
 {
   unsigned long currentMillis = millis();
 
@@ -418,9 +381,26 @@ void arrows()
 
 void glowIn()
 {
+  unsigned long lastMotionDetectedTime = 0;
+  float glowRate[NUM_LEDS];
+  float glowDelay[NUM_LEDS];
+
+  if (animationInitialized == false)
+  {
+
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+      leds[i] = CHSV(random(256), 255, 255);
+      glowRate[i] = random(21);
+      glowDelay[i] = random(21);
+    }
+    FastLED.setBrightness(128);
+
+    animationInitialized = true;
+  }
+
   for (int i = 0; i < NUM_LEDS; i++)
   {
-    leds[i] = CHSV(random(256), 255, 255);
   }
   FastLED.show();
 }
@@ -448,11 +428,15 @@ void loop()
     arrows();
     break;
 
+  case NIGHT_VISION:
+    nightVision();
+    break;
+
   case WHITE_MODE:
     whiteWhenMotionDetected();
     break;
   }
 
+  // This has to be added because the esp32 is too fast
   delay(1);
-  // rainbow();
 }

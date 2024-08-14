@@ -12,4 +12,5 @@ struct MqttTopics
 	static const String WhiteModeSet;
 	static const String SnakeModeSet;
 	static const String DebugModeSet;
+	static const String NightVisionSet;
 };
