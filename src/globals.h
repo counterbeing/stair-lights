@@ -1,6 +1,7 @@
 // globals.h
 #ifndef GLOBALS_H
 #define GLOBALS_H
+#include <string> // Add this line
 
 enum AnimationState
 {
@@ -10,6 +11,20 @@ enum AnimationState
 	WHITE_MODE,
 	NIGHT_VISION
 };
+
+struct AnimationConfig
+{
+	const char *name;
+	const char *uniqueId;
+	enum AnimationState state;
+
+	std::string buildTriggerTopic() const;
+	std::string buildStateTopic() const;
+};
+
+extern const AnimationConfig animations[];
+
+extern const int animationSize;
 
 extern volatile AnimationState currentAnimation;
 

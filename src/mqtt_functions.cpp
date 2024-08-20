@@ -37,6 +37,21 @@ struct Payload
 	bool retain;
 };
 
+Payload generateDiscoveryPayload(const AnimationConfig &config)
+{
+	char buffer[512];
+	snprintf(buffer, sizeof(buffer), R"({
+        "name": "%s",
+        "unique_id": "%s",
+        "command_topic": "%s",
+        "state_topic": "%s"
+    })",
+					 config.name, config.uniqueId, config.buildTriggerTopic(), config.buildStateTopic());
+
+	String topic = "homeassistant/button/" + String(config.uniqueId) + "/config";
+	return {topic, String(buffer), true};
+}
+
 Payload generateDiscoveryPayload(const char *name, const char *uniqueId)
 {
 	char buffer[512];
@@ -88,25 +103,35 @@ void sendDebugMessage(const char *message)
 	client.publish("debug", message);
 }
 
+void subscribeToAnimations()
+{
+	for (int i = 0; i < animationSize; ++i)
+	{
+		client.subscribe(animations[i].buildTriggerTopic().c_str());
+	}
+}
+
+// void sendDiscoveryPayloads()
+// {
+// 	for (int i = 0; i < animationSize; ++i)
+// 	{
+
+// 		const Payload payload = generateDiscoveryPayload(animations[i]);
+// 		client.subscribe(animations[i].buildTriggerTopic().c_str());
+// 	}
+// }
+
 void reconnect()
 {
-	static const char *topics[] = {
-			"home/stair-balls/movie_mode/trigger",
-			"home/stair-balls/white_mode/trigger",
-			"home/stair-balls/debug_mode/trigger",
-			"home/stair-balls/night_vision/trigger",
-			"home/stair-balls/snake_mode/trigger"};
-
+	Serial.print("Attempting MQTT connection...");
 	while (!client.connected())
 	{
-		Serial.print("Attempting MQTT connection...");
 		if (client.connect("stair-balls"))
 		{
 			Serial.println("Connected to MQTT server!");
-			for (const auto &topic : topics)
-			{
-				client.subscribe(topic);
-			}
+
+			// Subscribe to trigger topics
+			subscribeToAnimations();
 
 			// Send configuration payloads
 			sendDiscoveryPayloads();
