@@ -67,35 +67,23 @@ Payload generateDiscoveryPayload(const char *name, const char *uniqueId)
 	return {topic, String(buffer), true};
 }
 
-void sendDiscoveryPayloads()
+void sendDiscoveryPayload(const Payload payload)
 {
-
-	static const Payload payloads[] = {
-			generateDiscoveryPayload("White Mode", "white_mode"),
-			generateDiscoveryPayload("Debug Mode", "debug_mode"),
-			generateDiscoveryPayload("Snake Mode", "snake_mode"),
-			generateDiscoveryPayload("Night Vision", "night_vision"),
-			generateDiscoveryPayload("Movie Mode", "movie_mode")};
-
-	Serial.println("Sending config json...");
-	for (const auto &payload : payloads)
+	if (!client.connected())
 	{
-		if (!client.connected())
-		{
-			reconnect();
-		}
-
-		Serial.println("Publishing to topic: " + payload.topic);
-		if (!client.publish(payload.topic.c_str(), payload.payload.c_str(), payload.retain))
-		{
-			Serial.println("Payload publishing failed.");
-		}
-		else
-		{
-			Serial.println("Payload published successfully.");
-		}
-		delay(100);
+		reconnect();
 	}
+
+	Serial.println("Publishing to topic: " + payload.topic);
+	if (!client.publish(payload.topic.c_str(), payload.payload.c_str(), payload.retain))
+	{
+		Serial.println("Payload publishing failed.");
+	}
+	else
+	{
+		Serial.println("Payload published successfully.");
+	}
+	delay(100);
 }
 
 void sendDebugMessage(const char *message)
@@ -111,15 +99,16 @@ void subscribeToAnimations()
 	}
 }
 
-// void sendDiscoveryPayloads()
-// {
-// 	for (int i = 0; i < animationSize; ++i)
-// 	{
+void sendDiscoveryPayloads()
+{
+	for (int i = 0; i < animationSize; ++i)
+	{
 
-// 		const Payload payload = generateDiscoveryPayload(animations[i]);
-// 		client.subscribe(animations[i].buildTriggerTopic().c_str());
-// 	}
-// }
+		const Payload payload = generateDiscoveryPayload(animations[i]);
+		sendDiscoveryPayload(payload);
+		client.subscribe(animations[i].buildTriggerTopic().c_str());
+	}
+}
 
 void reconnect()
 {
