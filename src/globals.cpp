@@ -15,7 +15,8 @@ const AnimationConfig animations[] = {
 		{"Debug Mode", "debug_mode", DEBUG_MODE},
 		{"Snake Mode", "snake_mode", SNAKE_MODE},
 		{"Night Vision", "night_vision", NIGHT_VISION},
-		{"Movie Mode", "movie_mode", MOVIE_MODE}};
+		{"Movie Mode", "movie_mode", MOVIE_MODE},
+		{"Twinkle Twankle", "twinkle_twankle", TWINKLE_TWANKLE}};
 
 const int animationSize = sizeof(animations) / sizeof(animations[0]);
 

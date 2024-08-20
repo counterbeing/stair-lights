@@ -379,7 +379,7 @@ void arrows()
   }
 }
 
-void glowIn()
+void twinkleTwankle()
 {
   unsigned long lastMotionDetectedTime = 0;
   float glowRate[NUM_LEDS];
@@ -387,21 +387,37 @@ void glowIn()
 
   if (animationInitialized == false)
   {
-
     for (int i = 0; i < NUM_LEDS; i++)
     {
-      leds[i] = CHSV(random(256), 255, 255);
-      glowRate[i] = random(21);
-      glowDelay[i] = random(21);
+      leds[i] = CRGB::Black;                   // Start with all LEDs off
+      glowRate[i] = random(21);                // Randomize the fade-in rate
+      glowDelay[i] = millis() + random(10000); // Set the fade-in time randomly between 0 and 10 seconds
     }
-    FastLED.setBrightness(128);
-
     animationInitialized = true;
+    FastLED.show();
   }
 
+  unsigned long currentTime = millis();
   for (int i = 0; i < NUM_LEDS; i++)
   {
+    if (currentTime > glowDelay[i])
+    {
+      leds[i] = CHSV(random(256), 255, 128);  // Fade in to a random color with medium brightness
+      glowRate[i] = random(1, 10);            // Randomize the fade-in rate further during animation
+      glowDelay[i] += (long)glowRate[i] * 16; // Calculate the new fade-in time
+    }
   }
+
+  if (currentTime > glowDelay[NUM_LEDS - 1])
+  {
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+      leds[i] = CHSV(random(256), 255, 128); // Set all LEDs to a random color with medium brightness
+    }
+    FastLED.show();
+  }
+
+  FastLED.setBrightness(128);
   FastLED.show();
 }
 
@@ -429,6 +445,10 @@ void loop()
     break;
 
   case NIGHT_VISION:
+    nightVision();
+    break;
+
+  case TWINKLE_TWANKLE:
     nightVision();
     break;
 

@@ -9,7 +9,8 @@ enum AnimationState
 	SNAKE_MODE,
 	MOVIE_MODE,
 	WHITE_MODE,
-	NIGHT_VISION
+	NIGHT_VISION,
+	TWINKLE_TWANKLE
 };
 
 struct AnimationConfig

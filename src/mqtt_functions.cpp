@@ -12,21 +12,23 @@ void callback(char *topic, byte *payload, unsigned int length)
 
 	Serial.println(message);
 
-	// Mapping topic strings to animation states
-	static const std::map<String, AnimationState> topicToAnimation{
-			{MqttTopics::WhiteModeSet, WHITE_MODE},
-			{MqttTopics::SnakeModeSet, SNAKE_MODE},
-			{MqttTopics::DebugModeSet, DEBUG_MODE},
-			{MqttTopics::NightVisionSet, NIGHT_VISION},
-			{MqttTopics::MovieModeSet, MOVIE_MODE}};
+	// Initialize the current animation state to None (or some default value)
+	AnimationState currentState = WHITE_MODE; // Replace WHITE_MODE with a valid default value
 
-	if (message == "PRESS" || topicStr == MqttTopics::MovieModeSet)
+	// Iterate over the animations array to find the matching topic
+	for (size_t i = 0; i < animationSize; ++i)
 	{
-		auto it = topicToAnimation.find(topicStr);
-		if (it != topicToAnimation.end())
+		std::string stdTopic = animations[i].buildTriggerTopic();
+		String topicStr = String(stdTopic.c_str());
+		if (topicStr.equals(topic))
 		{
-			switchAnimation(it->second);
+			currentState = animations[i].state;
+			break;
 		}
+	}
+	if (message == "PRESS" || message == String(MqttTopics::MovieModeSet))
+	{
+		switchAnimation(currentState);
 	}
 }
 
