@@ -48,24 +48,9 @@ Payload generateDiscoveryPayload(const AnimationConfig &config)
         "command_topic": "%s",
         "state_topic": "%s"
     })",
-					 config.name, config.uniqueId, config.buildTriggerTopic(), config.buildStateTopic());
+					 config.name, config.uniqueId, config.buildTriggerTopic().c_str(), config.buildStateTopic().c_str());
 
 	String topic = "homeassistant/button/" + String(config.uniqueId) + "/config";
-	return {topic, String(buffer), true};
-}
-
-Payload generateDiscoveryPayload(const char *name, const char *uniqueId)
-{
-	char buffer[512];
-	snprintf(buffer, sizeof(buffer), R"({
-        "name": "%s",
-        "unique_id": "%s",
-        "command_topic": "home/stair-balls/%s/trigger",
-        "state_topic": "home/stair-balls/%s/state"
-    })",
-					 name, uniqueId, uniqueId, uniqueId);
-
-	String topic = "homeassistant/button/" + String(uniqueId) + "/config";
 	return {topic, String(buffer), true};
 }
 

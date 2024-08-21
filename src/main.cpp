@@ -381,43 +381,37 @@ void arrows()
 
 void twinkleTwankle()
 {
-  unsigned long lastMotionDetectedTime = 0;
-  float glowRate[NUM_LEDS];
-  float glowDelay[NUM_LEDS];
+  static unsigned long lastMotionDetectedTime = 0;
+  static int glowDelay[NUM_LEDS];
+  static int hue[NUM_LEDS];
+  static int brightness[NUM_LEDS];
+  static long glowStartTime[NUM_LEDS];
 
-  if (animationInitialized == false)
+  if (!animationInitialized)
   {
     for (int i = 0; i < NUM_LEDS; i++)
     {
-      leds[i] = CRGB::Black;                   // Start with all LEDs off
-      glowRate[i] = random(21);                // Randomize the fade-in rate
-      glowDelay[i] = millis() + random(10000); // Set the fade-in time randomly between 0 and 10 seconds
+      brightness[i] = 0;
+      hue[i] = random(256);
+      leds[i] = CHSV(hue[i], 255, 0);             // Start with LEDs off
+      glowDelay[i] = random(2000, 5000);          // Shorter delay for faster activation
+      glowStartTime[i] = millis() + random(3000); // Start time within 3 seconds
     }
     animationInitialized = true;
-    FastLED.show();
   }
 
   unsigned long currentTime = millis();
   for (int i = 0; i < NUM_LEDS; i++)
   {
-    if (currentTime > glowDelay[i])
+    if (currentTime > (glowStartTime[i] + glowDelay[i]))
     {
-      leds[i] = CHSV(random(256), 255, 128);  // Fade in to a random color with medium brightness
-      glowRate[i] = random(1, 10);            // Randomize the fade-in rate further during animation
-      glowDelay[i] += (long)glowRate[i] * 16; // Calculate the new fade-in time
+      glowStartTime[i] = currentTime + glowDelay[i];
+      brightness[i] = constrain(brightness[i] + 10, 0, 255); // Increase brightness more quickly
+      leds[i] = CHSV(hue[i], 255, brightness[i]);            // Update the LED with new brightness
     }
   }
 
-  if (currentTime > glowDelay[NUM_LEDS - 1])
-  {
-    for (int i = 0; i < NUM_LEDS; i++)
-    {
-      leds[i] = CHSV(random(256), 255, 128); // Set all LEDs to a random color with medium brightness
-    }
-    FastLED.show();
-  }
-
-  FastLED.setBrightness(128);
+  FastLED.setBrightness(255);
   FastLED.show();
 }
 
@@ -449,7 +443,7 @@ void loop()
     break;
 
   case TWINKLE_TWANKLE:
-    nightVision();
+    twinkleTwankle();
     break;
 
   case WHITE_MODE:
