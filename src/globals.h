@@ -10,7 +10,8 @@ enum AnimationState
 	MOVIE_MODE,
 	WHITE_MODE,
 	NIGHT_VISION,
-	TWINKLE_TWANKLE
+	TWINKLE_TWANKLE,
+	FUZZ_WAVE
 };
 
 struct AnimationConfig

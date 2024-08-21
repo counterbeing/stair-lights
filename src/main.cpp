@@ -389,13 +389,14 @@ void twinkleTwankle()
 
   if (!animationInitialized)
   {
+    FastLED.setBrightness(255);
     for (int i = 0; i < NUM_LEDS; i++)
     {
       brightness[i] = 0;
       hue[i] = random(256);
-      leds[i] = CHSV(hue[i], 255, 0);             // Start with LEDs off
-      glowDelay[i] = random(2000, 5000);          // Shorter delay for faster activation
-      glowStartTime[i] = millis() + random(3000); // Start time within 3 seconds
+      leds[i] = CHSV(hue[i], 255, 0);  // Start with LEDs off
+      glowDelay[i] = random(50, 1000); // Shorter delay for faster activation
+      glowStartTime[i] = millis() + random(5000);
     }
     animationInitialized = true;
   }
@@ -406,12 +407,64 @@ void twinkleTwankle()
     if (currentTime > (glowStartTime[i] + glowDelay[i]))
     {
       glowStartTime[i] = currentTime + glowDelay[i];
-      brightness[i] = constrain(brightness[i] + 10, 0, 255); // Increase brightness more quickly
-      leds[i] = CHSV(hue[i], 255, brightness[i]);            // Update the LED with new brightness
+      brightness[i] = constrain(brightness[i] + 1, 0, 255); // Increase brightness more quickly
+      leds[i] = CHSV(hue[i], 255, brightness[i]);           // Update the LED with new brightness
+    }
+  }
+  FastLED.show();
+}
+
+bool weightedOnOrOff(int ledNumber)
+{
+  double status = (double)ledNumber / NUM_LEDS;
+  if (random(10000) < (status * 1000))
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+void fuzzWave()
+{
+  static unsigned long lastMotionDetectedTime = 0;
+  static int glowDelay[NUM_LEDS];
+  static int hue[NUM_LEDS];
+  unsigned long currentMillis = millis();
+  static boolean motionDetected = false;
+
+  if (!animationInitialized)
+  {
+    FastLED.setBrightness(255);
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+      hue[i] = random(256);
+      leds[i] = CHSV(hue[i], 255, 255); // Start with LEDs off
+      glowDelay[i] = random(50, 1000);  // Shorter delay for faster activation
+    }
+    animationInitialized = true;
+  }
+
+  if (digitalRead(MOTION_SENSOR_PIN) == HIGH)
+  {
+    if (!motionDetected || (currentMillis - lastMotionDetectedTime) > 100)
+    {
+      sendDebugMessage("motion detected");
+      motionDetected = true;
+      lastMotionDetectedTime = currentMillis;
+
+      for (int i = 0; i < NUM_LEDS; i++)
+      {
+        if (weightedOnOrOff(i))
+        {
+          leds[i] = CHSV(random(256), 255, 255);
+        }
+      }
     }
   }
 
-  FastLED.setBrightness(255);
   FastLED.show();
 }
 
@@ -444,6 +497,10 @@ void loop()
 
   case TWINKLE_TWANKLE:
     twinkleTwankle();
+    break;
+
+  case FUZZ_WAVE:
+    fuzzWave();
     break;
 
   case WHITE_MODE:

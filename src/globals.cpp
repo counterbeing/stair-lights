@@ -1,7 +1,7 @@
 // globals.cpp
 #include "globals.h"
 
-volatile AnimationState currentAnimation = SNAKE_MODE; // Definition
+volatile AnimationState currentAnimation = TWINKLE_TWANKLE; // Definition
 volatile bool animationInitialized = false;
 
 void switchAnimation(AnimationState nextAnimation)
@@ -16,6 +16,7 @@ const AnimationConfig animations[] = {
 		{"Snake Mode", "snake_mode", SNAKE_MODE},
 		{"Night Vision", "night_vision", NIGHT_VISION},
 		{"Movie Mode", "movie_mode", MOVIE_MODE},
+		{"Fuzz Wave", "fuzz_wave", FUZZ_WAVE},
 		{"Twinkle Twankle", "twinkle_twankle", TWINKLE_TWANKLE}};
 
 const int animationSize = sizeof(animations) / sizeof(animations[0]);
