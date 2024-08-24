@@ -1,7 +1,7 @@
 // globals.cpp
 #include "globals.h"
 
-volatile AnimationState currentAnimation = TWINKLE_TWANKLE; // Definition
+volatile AnimationState currentAnimation = FUZZ_WAVE; // Definition
 volatile bool animationInitialized = false;
 
 void switchAnimation(AnimationState nextAnimation)

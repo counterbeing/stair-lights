@@ -95,6 +95,7 @@ void setup()
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(MOTION_SENSOR_PIN, INPUT);
+  pinMode(MOTION_SENSOR_PIN_2, INPUT);
 
   FastLED.addLeds<WS2811, LED_DATA_PIN, RGB>(leds, NUM_LEDS);
   bootPattern();
@@ -416,7 +417,7 @@ void twinkleTwankle()
 
 bool weightedOnOrOff(int ledNumber)
 {
-  double status = (double)ledNumber / NUM_LEDS;
+  double status = ((double)ledNumber / NUM_LEDS - 0.2);
   if (random(10000) < (status * 1000))
   {
     return true;
@@ -430,7 +431,6 @@ bool weightedOnOrOff(int ledNumber)
 void fuzzWave()
 {
   static unsigned long lastMotionDetectedTime = 0;
-  static int glowDelay[NUM_LEDS];
   static int hue[NUM_LEDS];
   unsigned long currentMillis = millis();
   static boolean motionDetected = false;
@@ -440,27 +440,32 @@ void fuzzWave()
     FastLED.setBrightness(255);
     for (int i = 0; i < NUM_LEDS; i++)
     {
-      hue[i] = random(256);
-      leds[i] = CHSV(hue[i], 255, 255); // Start with LEDs off
-      glowDelay[i] = random(50, 1000);  // Shorter delay for faster activation
+      leds[i] = CHSV(random(256), 255, 255);
     }
     animationInitialized = true;
   }
 
   if (digitalRead(MOTION_SENSOR_PIN) == HIGH)
   {
-    if (!motionDetected || (currentMillis - lastMotionDetectedTime) > 100)
+    for (int i = 0; i < NUM_LEDS; i++)
     {
-      sendDebugMessage("motion detected");
-      motionDetected = true;
-      lastMotionDetectedTime = currentMillis;
-
-      for (int i = 0; i < NUM_LEDS; i++)
+      if (weightedOnOrOff(i))
       {
-        if (weightedOnOrOff(i))
-        {
-          leds[i] = CHSV(random(256), 255, 255);
-        }
+        leds[i] = CHSV(random(256), 255, 255);
+      }
+    }
+  }
+
+  if (digitalRead(MOTION_SENSOR_PIN_2) == HIGH)
+  {
+
+    sendDebugMessage("motion detected");
+
+    for (int i = NUM_LEDS - 1; i >= 0; i--)
+    {
+      if (weightedOnOrOff(NUM_LEDS - i))
+      {
+        leds[i] = CHSV(random(256), 255, 255);
       }
     }
   }
@@ -468,8 +473,15 @@ void fuzzWave()
   FastLED.show();
 }
 
+void testingMotion()
+{
+  long analogOut = analogRead(MOTION_SENSOR_PIN);
+  sendDebugMessage(String(analogOut).c_str());
+}
+
 void loop()
 {
+  // testingMotion();
   ArduinoOTA.handle();
   if (!client.connected())
   {
