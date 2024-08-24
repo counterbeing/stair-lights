@@ -492,37 +492,44 @@ void pushArray(int arr[], int size)
   arr[0] = 0; // Insert 0 at the beginning after shifting
 }
 
+void prefixArray(int existingArray[], int newValues[], int newSize)
+{
+  for (int i = 0; i < newSize; i++)
+  {
+    existingArray[i] = newValues[i];
+  }
+}
+
 void waves()
 {
   static const int waveLength = 5;
   static const int virtualRows = NUM_ROWS + (waveLength * 2);
-  static int waveIndex[NUM_ROWS] = {0}; // Initialize all elements to 0
+  static int waveIndex[virtualRows] = {0}; // Initialize all elements to 0
   static unsigned long lastWaveTime = 0;
   static unsigned long lastAnimationTime = 0;
 
-  // Update the animation every 200ms
   if ((millis() - lastAnimationTime) > 200)
   {
     lastAnimationTime = millis();
-
     fill_solid(leds, NUM_LEDS, CRGB::Black);
+    pushArray(waveIndex, virtualRows);
 
-    pushArray(waveIndex, NUM_ROWS);
-    // Start a new wave every 1500ms
-    if ((millis() - lastWaveTime) > 1800)
+    if ((millis() - lastWaveTime) > 2200)
     {
-      lastWaveTime = millis();        // Update the wave timer
-      pushArray(waveIndex, NUM_ROWS); // Shift the wave down the array
-      waveIndex[0] = 1;
+      lastWaveTime = millis(); // Update the wave timer
+      int waveValues[5] = {5, 4, 3, 2, 1};
+
+      prefixArray(waveIndex, waveValues, 5); // Now passing the size explicitly
     }
 
-    // Light up the rows based on waveIndex and fade them out
     for (int i = 0; i < NUM_ROWS; i++)
     {
-      if (waveIndex[i] > 0)
+      int indexValue = waveIndex[i + waveLength]; // Access the adjusted index for visible rows
+      if (indexValue > 0)
       {
-        addLEDRange(i * NUM_COLS, (i + 1) * NUM_COLS - 1, CRGB::Red); // Set row to Red
-        // waveIndex[i]--;                                               // Decrease the value to fade the wave
+        CRGB color = CRGB::Red;         // Start with full brightness red
+        color.nscale8(indexValue * 51); // Scale down based on indexValue (max indexValue * 51 = 255)
+        addLEDRange(i * NUM_COLS, (i + 1) * NUM_COLS - 1, color);
       }
     }
 
@@ -530,12 +537,12 @@ void waves()
 
     // Debug output to see how the waveIndex changes over time
     String waveIndexString;
-    for (int i = 0; i < NUM_ROWS; i++)
+    for (int i = 0; i < virtualRows; i++)
     {
       waveIndexString += String(waveIndex[i]);
-      if (i < NUM_ROWS - 1)
+      if (i < virtualRows - 1)
       {
-        waveIndexString += ","; // Add a comma between the values
+        waveIndexString += ",";
       }
     }
     sendDebugMessage(waveIndexString.c_str());
