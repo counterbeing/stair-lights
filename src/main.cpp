@@ -492,6 +492,15 @@ void pushArray(int arr[], int size)
   arr[0] = 0; // Insert 0 at the beginning after shifting
 }
 
+void pushArrayReverse(int arr[], int size)
+{
+  for (int i = 0; i < size - 1; i++)
+  {
+    arr[i] = arr[i + 1]; // Shift elements up one position
+  }
+  arr[size - 1] = 0; // Insert 0 at the end after shifting
+}
+
 void prefixArray(int existingArray[], int newValues[], int newSize)
 {
   for (int i = 0; i < newSize; i++)
@@ -504,8 +513,10 @@ void waves()
 {
   static const int waveLength = 5;
   static const int virtualRows = NUM_ROWS + (waveLength * 2);
-  static int waveIndex[virtualRows] = {0}; // Initialize all elements to 0
+  static int waveIndex[virtualRows] = {0};        // Initialize all elements to 0
+  static int waveIndexReverse[virtualRows] = {0}; // Initialize all elements to 0 for reverse wave
   static unsigned long lastWaveTime = 0;
+  static unsigned long lastReverseWaveTime = 0;
   static unsigned long lastAnimationTime = 0;
 
   if ((millis() - lastAnimationTime) > 200)
@@ -513,8 +524,9 @@ void waves()
     lastAnimationTime = millis();
     fill_solid(leds, NUM_LEDS, CRGB::Black);
     pushArray(waveIndex, virtualRows);
+    pushArrayReverse(waveIndexReverse, virtualRows);
 
-    if ((millis() - lastWaveTime) > 2200)
+    if ((millis() - lastWaveTime) > 2900)
     {
       lastWaveTime = millis(); // Update the wave timer
       int waveValues[5] = {1, 2, 3, 4, 5};
@@ -522,15 +534,40 @@ void waves()
       prefixArray(waveIndex, waveValues, 5); // Now passing the size explicitly
     }
 
+    if ((millis() - lastReverseWaveTime) > 2500)
+    { // Different timing for reverse wave
+      lastReverseWaveTime = millis();
+      int reverseWaveValues[5] = {5, 4, 3, 2, 1}; // Example values
+      waveIndexReverse[virtualRows - 1] = 5;      // Start the wave at the end
+      for (int j = 1; j < 5; j++)
+      {
+        waveIndexReverse[virtualRows - 1 - j] = reverseWaveValues[j];
+      }
+    }
+
     for (int i = 0; i < NUM_ROWS; i++)
     {
-      int indexValue = waveIndex[i + waveLength]; // Access the adjusted index for visible rows
+      int indexValue = waveIndex[i + waveLength];               // Access the adjusted index for visible rows from the forward wave
+      int reverseIndexValue = waveIndexReverse[i + waveLength]; // Access the adjusted index for visible rows from the reverse wave
+
+      CRGB forwardColor = CRGB::Black;
+      CRGB reverseColor = CRGB::Black;
+
       if (indexValue > 0)
       {
-        CRGB color = CRGB::Red;         // Start with full brightness red
-        color.nscale8(indexValue * 51); // Scale down based on indexValue (max indexValue * 51 = 255)
-        addLEDRange(i * NUM_COLS, (i + 1) * NUM_COLS - 1, color);
+        forwardColor = CRGB::Lime;
+        forwardColor.nscale8(indexValue * 51); // Scale down based on indexValue
       }
+
+      if (reverseIndexValue > 0)
+      {
+        reverseColor = CRGB::Coral;
+        reverseColor.nscale8(reverseIndexValue * 51); // Scale down based on reverseIndexValue
+      }
+
+      // Blend colors where both waves exist
+      CRGB blendedColor = blend(forwardColor, reverseColor, 128); // Blend equally for simplicity, adjust as needed
+      addLEDRange(i * NUM_COLS, (i + 1) * NUM_COLS - 1, blendedColor);
     }
 
     FastLED.show(); // Show the updated LED state
