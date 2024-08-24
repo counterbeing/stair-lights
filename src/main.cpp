@@ -66,13 +66,13 @@ void bootPattern()
 {
   fill_solid(leds, NUM_LEDS, CRGB::Red);
   FastLED.show();
-  delay(800);
+  delay(100);
   fill_solid(leds, NUM_LEDS, CRGB::Green);
   FastLED.show();
-  delay(800);
+  delay(100);
   fill_solid(leds, NUM_LEDS, CRGB::Blue);
   FastLED.show();
-  delay(800);
+  delay(100);
 }
 
 void printWifiStatus()
@@ -517,7 +517,7 @@ void waves()
     if ((millis() - lastWaveTime) > 2200)
     {
       lastWaveTime = millis(); // Update the wave timer
-      int waveValues[5] = {5, 4, 3, 2, 1};
+      int waveValues[5] = {1, 2, 3, 4, 5};
 
       prefixArray(waveIndex, waveValues, 5); // Now passing the size explicitly
     }
