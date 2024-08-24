@@ -24,6 +24,9 @@ struct AnimationConfig
 	std::string buildStateTopic() const;
 };
 
+// extern const int NUM_ROWS;
+// extern const int NUM_COLS;
+
 extern const AnimationConfig animations[];
 
 extern const int animationSize;

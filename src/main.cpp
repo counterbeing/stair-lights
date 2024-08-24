@@ -95,7 +95,9 @@ void setup()
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(MOTION_SENSOR_PIN, INPUT);
+
   pinMode(MOTION_SENSOR_PIN_2, INPUT);
+  // analogSetPinAttenuation(MOTION_SENSOR_PIN_2, ADC_11db);
 
   FastLED.addLeds<WS2811, LED_DATA_PIN, RGB>(leds, NUM_LEDS);
   bootPattern();
@@ -473,10 +475,78 @@ void fuzzWave()
   FastLED.show();
 }
 
+void addLEDRange(int start, int end, CRGB color)
+{
+  for (int i = start; i <= end; i++)
+  {
+    leds[i] = leds[i] + color; // Set the LED to the specified color
+  }
+}
+
+void pushArray(int arr[], int size)
+{
+  for (int i = size - 1; i > 0; i--)
+  {
+    arr[i] = arr[i - 1]; // Shift elements down one position
+  }
+  arr[0] = 0; // Insert 0 at the beginning after shifting
+}
+
+void waves()
+{
+  static const int waveLength = 5;
+  static const int virtualRows = NUM_ROWS + (waveLength * 2);
+  static int waveIndex[NUM_ROWS] = {0}; // Initialize all elements to 0
+  static unsigned long lastWaveTime = 0;
+  static unsigned long lastAnimationTime = 0;
+
+  // Update the animation every 200ms
+  if ((millis() - lastAnimationTime) > 200)
+  {
+    lastAnimationTime = millis();
+
+    fill_solid(leds, NUM_LEDS, CRGB::Black);
+
+    pushArray(waveIndex, NUM_ROWS);
+    // Start a new wave every 1500ms
+    if ((millis() - lastWaveTime) > 1800)
+    {
+      lastWaveTime = millis();        // Update the wave timer
+      pushArray(waveIndex, NUM_ROWS); // Shift the wave down the array
+      waveIndex[0] = 1;
+    }
+
+    // Light up the rows based on waveIndex and fade them out
+    for (int i = 0; i < NUM_ROWS; i++)
+    {
+      if (waveIndex[i] > 0)
+      {
+        addLEDRange(i * NUM_COLS, (i + 1) * NUM_COLS - 1, CRGB::Red); // Set row to Red
+        // waveIndex[i]--;                                               // Decrease the value to fade the wave
+      }
+    }
+
+    FastLED.show(); // Show the updated LED state
+
+    // Debug output to see how the waveIndex changes over time
+    String waveIndexString;
+    for (int i = 0; i < NUM_ROWS; i++)
+    {
+      waveIndexString += String(waveIndex[i]);
+      if (i < NUM_ROWS - 1)
+      {
+        waveIndexString += ","; // Add a comma between the values
+      }
+    }
+    sendDebugMessage(waveIndexString.c_str());
+  }
+}
+
 void testingMotion()
 {
-  long analogOut = analogRead(MOTION_SENSOR_PIN);
-  sendDebugMessage(String(analogOut).c_str());
+  // int out = analogRead(MOTION_SENSOR_PIN_2);
+  int out = digitalRead(MOTION_SENSOR_PIN_2);
+  sendDebugMessage(String(out).c_str());
 }
 
 void loop()
@@ -489,36 +559,37 @@ void loop()
   }
   client.loop();
 
-  switch (currentAnimation)
-  {
-  case DEBUG_MODE:
-    rgbLoop();
-    break;
+  waves();
+  // switch (currentAnimation)
+  // {
+  // case DEBUG_MODE:
+  //   rgbLoop();
+  //   break;
 
-  case SNAKE_MODE:
-    snakeLedsOnMotion();
-    break;
+  // case SNAKE_MODE:
+  //   snakeLedsOnMotion();
+  //   break;
 
-  case MOVIE_MODE:
-    arrows();
-    break;
+  // case MOVIE_MODE:
+  //   arrows();
+  //   break;
 
-  case NIGHT_VISION:
-    nightVision();
-    break;
+  // case NIGHT_VISION:
+  //   nightVision();
+  //   break;
 
-  case TWINKLE_TWANKLE:
-    twinkleTwankle();
-    break;
+  // case TWINKLE_TWANKLE:
+  //   twinkleTwankle();
+  //   break;
 
-  case FUZZ_WAVE:
-    fuzzWave();
-    break;
+  // case FUZZ_WAVE:
+  //   fuzzWave();
+  //   break;
 
-  case WHITE_MODE:
-    whiteWhenMotionDetected();
-    break;
-  }
+  // case WHITE_MODE:
+  //   whiteWhenMotionDetected();
+  //   break;
+  // }
 
   // This has to be added because the esp32 is too fast
   delay(1);

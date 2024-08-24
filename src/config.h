@@ -6,3 +6,5 @@
 #define MOTION_SENSOR_PIN_2 26
 #define LED_DATA_PIN 25
 #define LED_BUILTIN 2
+#define NUM_COLS 7
+#define NUM_ROWS 17

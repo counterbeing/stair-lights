@@ -1,6 +1,9 @@
 // globals.cpp
 #include "globals.h"
 
+// extern const int NUM_ROWS = 7;
+// extern const int NUM_COLS = 17;
+
 volatile AnimationState currentAnimation = FUZZ_WAVE; // Definition
 volatile bool animationInitialized = false;
 
