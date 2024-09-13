@@ -4,7 +4,7 @@
 // extern const int NUM_ROWS = 7;
 // extern const int NUM_COLS = 17;
 
-volatile AnimationState currentAnimation = FUZZ_WAVE; // Definition
+volatile AnimationState currentAnimation = SIN_COLOR_FADE; // Definition
 volatile bool animationInitialized = false;
 
 void switchAnimation(AnimationState nextAnimation)
@@ -20,7 +20,9 @@ const AnimationConfig animations[] = {
 		{"Night Vision", "night_vision", NIGHT_VISION},
 		{"Movie Mode", "movie_mode", MOVIE_MODE},
 		{"Fuzz Wave", "fuzz_wave", FUZZ_WAVE},
-		{"Twinkle Twankle", "twinkle_twankle", TWINKLE_TWANKLE}};
+		{"Energy Battle", "energy_battle", ENERGY_BATTLE},
+		{"Twinkle Twankle", "twinkle_twankle", TWINKLE_TWANKLE},
+		{"Sin Color Fade", "sin_color_fade", SIN_COLOR_FADE}};
 
 const int animationSize = sizeof(animations) / sizeof(animations[0]);
 

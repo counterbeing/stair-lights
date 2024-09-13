@@ -126,18 +126,43 @@ void setup()
   printWifiStatus();
 }
 
-// color fade
-void fadeAllColors()
+float sinWave()
 {
-  static unsigned long lastFade = 0;
+  const unsigned long period = 20000; // 10 seconds in milliseconds
+  const float pi = 3.14159265359;
+
+  // Calculate the current position in the wave cycle
+  float position = (millis() % period) / static_cast<float>(period);
+
+  // Calculate the sine value and normalize it to 0-1 range
+  return (sin(position * 2 * pi) + 1) / 2;
+}
+
+// color fade
+void incrementColor()
+{
   static int fade = 0;
 
-  if (millis() - lastFade > 400)
+  fade = (fade + 1) % 256;
+  fill_solid(leds, NUM_LEDS, CHSV(fade, 255, 255));
+  FastLED.show();
+}
+
+void sinColorFade()
+{
+  static unsigned long lastColorChange = 0;
+  unsigned long currentMillis = millis();
+
+  // Get the sine wave value (0 to 1)
+  float waveValue = sinWave();
+
+  // Map the sine wave value to a delay between 10ms and 100ms
+  unsigned long delayTime = map(waveValue * 1000, 0, 1000, 10, 500);
+
+  if (currentMillis - lastColorChange >= delayTime)
   {
-    lastFade = millis();
-    fade = (fade + 1) % 256;
-    fill_solid(leds, NUM_LEDS, CHSV(fade, 255, 255));
-    FastLED.show();
+    incrementColor();
+    lastColorChange = currentMillis;
   }
 }
 
@@ -509,7 +534,7 @@ void prefixArray(int existingArray[], int newValues[], int newSize)
   }
 }
 
-void waves()
+void energyBattle()
 {
   static const int waveLength = 5;
   static const int virtualRows = NUM_ROWS + (waveLength * 2);
@@ -526,7 +551,7 @@ void waves()
     pushArray(waveIndex, virtualRows);
     pushArrayReverse(waveIndexReverse, virtualRows);
 
-    if ((millis() - lastWaveTime) > 2900)
+    if (digitalRead(MOTION_SENSOR_PIN) == HIGH && (millis() - lastWaveTime) > 1000)
     {
       lastWaveTime = millis(); // Update the wave timer
       int waveValues[5] = {1, 2, 3, 4, 5};
@@ -534,10 +559,10 @@ void waves()
       prefixArray(waveIndex, waveValues, 5); // Now passing the size explicitly
     }
 
-    if ((millis() - lastReverseWaveTime) > 2500)
+    if (digitalRead(MOTION_SENSOR_PIN_2) == HIGH && (millis() - lastReverseWaveTime) > 100)
     { // Different timing for reverse wave
       lastReverseWaveTime = millis();
-      int reverseWaveValues[5] = {5, 4, 3, 2, 1}; // Example values
+      int reverseWaveValues[5] = {1, 2, 3, 4, 5}; // Example values
       waveIndexReverse[virtualRows - 1] = 5;      // Start the wave at the end
       for (int j = 1; j < 5; j++)
       {
@@ -582,7 +607,7 @@ void waves()
         waveIndexString += ",";
       }
     }
-    sendDebugMessage(waveIndexString.c_str());
+    // sendDebugMessage(waveIndexString.c_str());
   }
 }
 
@@ -603,37 +628,59 @@ void loop()
   }
   client.loop();
 
-  waves();
-  // switch (currentAnimation)
+  // static int lastReportTime = millis();
+
+  // if ((millis() - lastReportTime) > 50)
   // {
-  // case DEBUG_MODE:
-  //   rgbLoop();
-  //   break;
 
-  // case SNAKE_MODE:
-  //   snakeLedsOnMotion();
-  //   break;
-
-  // case MOVIE_MODE:
-  //   arrows();
-  //   break;
-
-  // case NIGHT_VISION:
-  //   nightVision();
-  //   break;
-
-  // case TWINKLE_TWANKLE:
-  //   twinkleTwankle();
-  //   break;
-
-  // case FUZZ_WAVE:
-  //   fuzzWave();
-  //   break;
-
-  // case WHITE_MODE:
-  //   whiteWhenMotionDetected();
-  //   break;
+  //   lastReportTime = millis();
+  //   if (digitalRead(MOTION_SENSOR_PIN_2) == HIGH)
+  //   {
+  //     sendDebugMessage("HIGH");
+  //   }
+  //   else
+  //   {
+  //     sendDebugMessage("LOW");
+  //   }
   // }
+  switch (currentAnimation)
+  {
+  case DEBUG_MODE:
+    rgbLoop();
+    break;
+
+  case SNAKE_MODE:
+    snakeLedsOnMotion();
+    break;
+
+  case MOVIE_MODE:
+    arrows();
+    break;
+
+  case NIGHT_VISION:
+    nightVision();
+    break;
+
+  case TWINKLE_TWANKLE:
+    twinkleTwankle();
+    break;
+
+  case FUZZ_WAVE:
+    fuzzWave();
+    break;
+
+  case ENERGY_BATTLE:
+    energyBattle();
+    break;
+
+  case WHITE_MODE:
+    whiteWhenMotionDetected();
+    break;
+
+  case SIN_COLOR_FADE:
+    sinColorFade();
+    break;
+  }
 
   // This has to be added because the esp32 is too fast
   delay(1);
