@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+
+# PlatformIO deployment script for stair-lights
+# Usage: ./bin/deploy [environment]
+
+ENVIRONMENT=${1:-default}
+
+echo "🚀 Deploying stair-lights to ESP32..."
+echo "Environment: $ENVIRONMENT"
+echo
+
+# Build and upload
+if [ "$ENVIRONMENT" = "default" ]; then
+    echo "📦 Building and uploading..."
+    platformio run --target upload
+else
+    echo "📦 Building and uploading to environment: $ENVIRONMENT"
+    platformio run --environment "$ENVIRONMENT" --target upload
+fi
+
+echo
+echo "✅ Deployment complete!"
+echo "💡 Monitor serial output with: platformio device monitor"
