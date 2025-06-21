@@ -16,6 +16,7 @@ void arrows();
 void twinkleTwankle();
 void fuzzWave();
 void energyBattle();
+void bouncingBall();
 
 // Helper function declarations
 int countUPAndDown(int min, int max, int step);

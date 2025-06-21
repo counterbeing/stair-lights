@@ -13,7 +13,8 @@ enum AnimationState
 	TWINKLE_TWANKLE,
 	FUZZ_WAVE,
 	ENERGY_BATTLE,
-	SIN_COLOR_FADE
+	SIN_COLOR_FADE,
+	BOUNCING_BALL
 };
 
 struct AnimationConfig

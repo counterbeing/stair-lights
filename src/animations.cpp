@@ -546,3 +546,112 @@ void testingMotion()
 	int out = digitalRead(MOTION_SENSOR_PIN_2);
 	sendDebugMessage(String(out).c_str());
 }
+
+void bouncingBall()
+{
+	static unsigned long lastUpdate = 0;
+	static float ballX = NUM_COLS / 2.0;
+	static float ballY = NUM_ROWS / 2.0;
+	static float velocityX = 0.0;
+	static float velocityY = 0.0;
+	static uint8_t hue = 0;
+	static bool initialized = false;
+	
+	const unsigned long QUARTER_SECOND = 250;
+	const float MOMENTUM_FACTOR = 0.7;
+	const float RANDOM_FACTOR = 0.3;
+	const float SPEED = 1.0;
+	
+	if (!initialized)
+	{
+		// Initialize with random direction
+		velocityX = (random(2) == 0 ? -SPEED : SPEED);
+		velocityY = (random(2) == 0 ? -SPEED : SPEED);
+		initialized = true;
+	}
+	
+	// Update every quarter second
+	if (millis() - lastUpdate >= QUARTER_SECOND)
+	{
+		// Clear all LEDs
+		fill_solid(leds, NUM_LEDS, CRGB::Black);
+		
+		// Continuously change color
+		hue += 3;
+		
+		// Calculate new velocity with momentum and randomness
+		float newVelX = velocityX * MOMENTUM_FACTOR;
+		float newVelY = velocityY * MOMENTUM_FACTOR;
+		
+		// Add random component
+		float randomX = (random(201) - 100) / 100.0 * RANDOM_FACTOR * SPEED;
+		float randomY = (random(201) - 100) / 100.0 * RANDOM_FACTOR * SPEED;
+		
+		newVelX += randomX;
+		newVelY += randomY;
+		
+		// Normalize speed to maintain consistent movement
+		float magnitude = sqrt(newVelX * newVelX + newVelY * newVelY);
+		if (magnitude > 0)
+		{
+			newVelX = (newVelX / magnitude) * SPEED;
+			newVelY = (newVelY / magnitude) * SPEED;
+		}
+		
+		velocityX = newVelX;
+		velocityY = newVelY;
+		
+		// Update position
+		ballX += velocityX;
+		ballY += velocityY;
+		
+		// Bounce off walls (pong-style)
+		if (ballX <= 0)
+		{
+			ballX = 0;
+			velocityX = abs(velocityX);
+		}
+		else if (ballX >= NUM_COLS - 1)
+		{
+			ballX = NUM_COLS - 1;
+			velocityX = -abs(velocityX);
+		}
+		
+		if (ballY <= 0)
+		{
+			ballY = 0;
+			velocityY = abs(velocityY);
+		}
+		else if (ballY >= NUM_ROWS - 1)
+		{
+			ballY = NUM_ROWS - 1;
+			velocityY = -abs(velocityY);
+		}
+		
+		// Convert 2D coordinates to LED index
+		int x = (int)round(ballX);
+		int y = (int)round(ballY);
+		
+		// Calculate LED index based on matrix layout
+		int ledIndex;
+		if (y % 2 == 0)
+		{
+			// Even rows: left to right
+			ledIndex = y * NUM_COLS + x;
+		}
+		else
+		{
+			// Odd rows: right to left (serpentine)
+			ledIndex = y * NUM_COLS + (NUM_COLS - 1 - x);
+		}
+		
+		// Light up the ball with current color
+		if (ledIndex >= 0 && ledIndex < NUM_LEDS)
+		{
+			leds[ledIndex] = CHSV(hue, 255, 255);
+		}
+		
+		FastLED.show();
+		lastUpdate = millis();
+	}
+}

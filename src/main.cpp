@@ -135,6 +135,10 @@ void loop()
   case SIN_COLOR_FADE:
     sinColorFade();
     break;
+
+  case BOUNCING_BALL:
+    bouncingBall();
+    break;
   }
 
   // This has to be added because the esp32 is too fast
