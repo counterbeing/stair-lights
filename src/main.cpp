@@ -59,29 +59,70 @@ void setup()
     Serial.println("MDNS responder started");
   }
 
-  while (WiFi.status() != WL_CONNECTED)
+  // Non-blocking WiFi connection with 30-second timeout
+  unsigned long wifiStartTime = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - wifiStartTime < 30000)
   {
-    delay(1000);
+    delay(100);
     Serial.print('.');
+  }
+
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    Serial.println("\nWiFi connected!");
+    printWifiStatus();
+  }
+  else
+  {
+    Serial.println("\nWiFi connection timeout - continuing without network");
   }
   client.setServer("home.corylogan.com", 1883);
   client.setBufferSize(512);
   client.setCallback(callback);
   Serial.println("BOOTED");
 
-  ArduinoOTA.begin();
-  printWifiStatus();
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    ArduinoOTA.begin();
+  }
 }
 
 void loop()
 {
   // testingMotion();
-  ArduinoOTA.handle();
-  if (!client.connected())
+
+  // Handle WiFi reconnection non-blocking
+  static unsigned long lastWifiReconnectAttempt = 0;
+  if (WiFi.status() != WL_CONNECTED)
   {
-    reconnect();
+    if (millis() - lastWifiReconnectAttempt > 10000) // Try every 10 seconds
+    {
+      lastWifiReconnectAttempt = millis();
+      Serial.println("Attempting WiFi reconnection...");
+      WiFi.disconnect();
+      WiFi.begin(SECRET_SSID, SECRET_PASS);
+    }
   }
-  client.loop();
+  else
+  {
+    // Only handle OTA when WiFi is connected
+    ArduinoOTA.handle();
+
+    // Handle MQTT reconnection non-blocking
+    static unsigned long lastMqttReconnectAttempt = 0;
+    if (!client.connected())
+    {
+      if (millis() - lastMqttReconnectAttempt > 5000) // Try every 5 seconds
+      {
+        lastMqttReconnectAttempt = millis();
+        reconnectNonBlocking();
+      }
+    }
+    else
+    {
+      client.loop();
+    }
+  }
 
   // static int lastReportTime = millis();
 

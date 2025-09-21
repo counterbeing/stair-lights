@@ -121,3 +121,27 @@ void reconnect()
 		}
 	}
 }
+
+bool reconnectNonBlocking()
+{
+	Serial.print("Attempting MQTT connection (non-blocking)...");
+
+	if (client.connect("stair-balls"))
+	{
+		Serial.println("Connected to MQTT server!");
+
+		// Subscribe to trigger topics
+		subscribeToAnimations();
+
+		// Send configuration payloads
+		sendDiscoveryPayloads();
+
+		return true;
+	}
+	else
+	{
+		Serial.print("Failed, rc=");
+		Serial.println(client.state());
+		return false;
+	}
+}
